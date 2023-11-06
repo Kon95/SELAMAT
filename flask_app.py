@@ -26,7 +26,7 @@ database = firebase.database()
 
 def fetch_data():
     try:
-        # Fetch data from your Firebase database (replace with your data path)
+        # Fetch data from your Firebase database
         data_accident = database.child("Accident").get().val()
         data_ev = database.child("Emergency Vehicle").get().val()
         if data_accident is not None and data_ev is not None:

@@ -139,7 +139,6 @@ def run_qt_app():
     MainWindow.show()
 
     def update_ui():
-        # Implement your UI update logic here
         data_dict = flask_app.fetch_data()
         data_accident = data_dict.get("data_accident", {})
         data_ev = data_dict.get("data_ev", {})
@@ -148,9 +147,8 @@ def run_qt_app():
     # Create a timer to periodically update the UI
     timer = QtCore.QTimer()
     timer.timeout.connect(update_ui)
-    timer.start(500)  # Set the interval in milliseconds (e.g., 5000 ms = 5 seconds)
+    timer.start(500)  
 
-    # Initial UI update
     update_ui()
 
     sys.exit(app.exec_())
