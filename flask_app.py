@@ -49,7 +49,7 @@ def populate_data(data_accident, data_ev, ui):
     ev_table.setRowCount(0)
 
     if not data_accident or not data_ev:
-        return  # No data to populate
+        return  
 
     # Check and populate the AccidentTable with Accident data
     if isinstance(data_accident, dict):
