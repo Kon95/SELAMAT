@@ -3,6 +3,7 @@ from ui import Ui_Dialog
 import data
 import flask_app
 from PyQt5 import QtCore, QtGui, QtWidgets, QtCore
+import qdarktheme
 
 class Main(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -120,7 +121,10 @@ class Main(QtWidgets.QDialog):
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
+    qdarktheme.enable_hi_dpi()
+    app = QtWidgets.QApplication(sys.argv)    
+    qdarktheme.setup_theme()
+
     ui = Main()
     ui.show()
     sys.exit(app.exec_())
