@@ -1,0 +1,6 @@
+pyqt5
+numpy
+pyrebase4
+matplotlib
+flask
+pyqtdarktheme

@@ -2,8 +2,12 @@ import sys
 from ui import Ui_Dialog
 import data
 import flask_app
-from PyQt5 import QtCore, QtGui, QtWidgets, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 import qdarktheme
+import datetime
+import time
+
+LOCATION = "PETALING JAYA"
 
 class Main(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -17,111 +21,108 @@ class Main(QtWidgets.QDialog):
         self.ui.crash_img.setScaledContent = True
         self.changeAlert("./assets/green.png")
         self.ui.alert1.clicked.connect(self.onCLick)
-        self.ui.alert2.clicked.connect(self.onCLick)
+        self.ui.SystemName.clicked.connect(self.startVideo)
+        self.ui.accident_table.verticalHeader().setVisible(False)
+        self.ui.ev_table.verticalHeader().setVisible(False)
+        self.step = 0
+
         self.alertTotal = 0
         self.updateGraph()
 
         self.showMaximized()
-        self.setTimerGraph()
-        self.setTimerTable()
-
-    def setTimerGraph(self):
-        self.timer1 = QtCore.QTimer()
-        self.timer1.timeout.connect(self.updateGraph)
-        self.timer1.start(2000)
 
     def updateGraph(self):
-        data.plot1()
-        data.plot2()
-        self.ui.traffic_img.setPixmap(QtGui.QPixmap("./assets/traffic_graph.png"))
-        self.ui.crash_img.setPixmap(QtGui.QPixmap("./assets/accident_graph.png"))
+        data.plot3()
+        img1 = QtGui.QPixmap("./assets/traffic_graph.png").scaled(600,500,QtCore.Qt.KeepAspectRatio)
+        img2 = QtGui.QPixmap("./assets/accident_graph.png").scaled(600,500,QtCore.Qt.KeepAspectRatio)
+        self.ui.traffic_img.setPixmap(img1)
+        self.ui.crash_img.setPixmap(img2)
 
-    def setTimerTable(self):
-        self.timer2 = QtCore.QTimer()
-        self.timer2.timeout.connect(self.updateTable)
-        self.timer2.start(500)
+    def keyPressEvent(self, event):
+        if self.step%4==0:
+                data = {
+                    "Time": str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+                    "Location": LOCATION,
+                    "Severity": "Medium"
+                }
+                self.updateTable(1,data)
+                self.ui.alert_text1.setText("Accident Detected")
+                self.onCLick()
+        elif self.step%4==1:
+                data = {
+                    "Time": str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+                    "Location": LOCATION,
+                    "Vehicle Detected": "Ambulance"
+                }
+                self.updateTable(2,data)
+                self.ui.alert_text1.setText("Ambulance Detected")
+                self.onCLick()
+        elif self.step%4==2:
+                data = {
+                    "Time": str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+                    "Location": LOCATION,
+                    "Vehicle Detected": "Police"
+                }
+                self.updateTable(2,data)
+                self.ui.alert_text1.setText("Police Detected")
+        elif self.step%4==3:
+                # self.resetTable()
+                self.ui.alert_text1.setText("Clear")
+                self.onCLick()
+        self.step += 1
+    
+    def startVideo(self):
+        data1 = {
+            "Time": str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            "Location": LOCATION,
+            "Severity": "Medium"
+        }
 
-    def updateTable(self):
-        data_dict = flask_app.fetch_data()
-        data_accident = data_dict.get("data_accident", {})
-        data_ev = data_dict.get("data_ev", {})
-        self.populate_data(data_accident, data_ev)
+        data2 = {
+            "Time": str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            "Location": LOCATION,
+            "Vehicle Detected": "Ambulance"
+        }
+        
+        data3 = {
+            "Time": str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            "Location": LOCATION,
+            "Vehicle Detected": "Police"
+        }
+
+        self.updateTable(1,data1)
+
+    def updateTable(self, ind, data):
+        if ind == 1:
+            self.addItemInTable(self.ui.accident_table,data)
+        else:
+            self.addItemInTable(self.ui.ev_table,data)
+    
+    def resetTable(self):
+        self.ui.accident_table.setRowCount(0)
+        self.ui.ev_table.setRowCount(0)
     
     def onCLick(self):
         self.alertTotal += 1
         if self.alertTotal %3 == 0:
             self.changeAlert("./assets/green.png")
-        elif self.alertTotal %3 == 1:
+        elif self.alertTotal %3 == 2:
             self.changeAlert("./assets/yellow.png")
         else:
             self.changeAlert("./assets/red.png")
         
     def changeAlert(self,path):
         self.ui.alert1.setPixmap(QtGui.QPixmap(path))
-        self.ui.alert2.setPixmap(QtGui.QPixmap(path))
 
-    def populate_data(self,data_accident, data_ev):
-        accident_table = self.ui.accident_table
-        ev_table = self.ui.ev_table
-
-        # Clear any existing data
-        accident_table.setRowCount(0)
-        ev_table.setRowCount(0)
-
-        if not data_accident or not data_ev:
-            return  
-
-        # Check and populate the AccidentTable with Accident data
-        if isinstance(data_accident, dict):
-            for key, value in data_accident.items():
-                if isinstance(value, dict):
-                    row_position = accident_table.rowCount()
-                    accident_table.insertRow(row_position)
-                    accident_table.setItem(row_position, 0, QtWidgets.QTableWidgetItem(key))
-                    accident_table.setItem(
-                        row_position, 1, QtWidgets.QTableWidgetItem(value.get("Code", ""))
-                    )
-                    accident_table.setItem(
-                        row_position,
-                        2,
-                        QtWidgets.QTableWidgetItem(value.get("Location", "")),
-                    )
-                    accident_table.setItem(
-                        row_position, 3, QtWidgets.QTableWidgetItem(value.get("Time", ""))
-                    )
-                    accident_table.setItem(
-                        row_position,
-                        4,
-                        QtWidgets.QTableWidgetItem(value.get("Severity", "")),
-                    )
-        else:
-            print("Invalid data format for Accident data:", data_accident)
-
-        # Check and populate the EVTable with Emergency Vehicle data
-        if isinstance(data_ev, dict):
-            for key, value in data_ev.items():
-                if isinstance(value, dict):
-                    row_position = ev_table.rowCount()
-                    ev_table.insertRow(row_position)
-                    ev_table.setItem(row_position, 0, QtWidgets.QTableWidgetItem(key))
-                    ev_table.setItem(
-                        row_position, 1, QtWidgets.QTableWidgetItem(value.get("Code", ""))
-                    )
-                    ev_table.setItem(
-                        row_position,
-                        2,
-                        QtWidgets.QTableWidgetItem(value.get("EV_Allocated", "")),
-                    )
-                    ev_table.setItem(
-                        row_position, 3, QtWidgets.QTableWidgetItem(value.get("EV_TOA", ""))
-                    )
-        else:
-            print("Invalid data format for Emergency Vehicle data:", data_ev)
-
+    def addItemInTable(self, table, dic):
+        pos = table.rowCount()
+        table.insertRow(pos)
+        for i, value in enumerate(dic.values()):
+            table.setItem(pos, i, QtWidgets.QTableWidgetItem(value))
 
 
 if __name__ == "__main__":
-    qdarktheme.enable_hi_dpi()
+    # qdarktheme.enable_hi_dpi()
     app = QtWidgets.QApplication(sys.argv)    
     qdarktheme.setup_theme()
 
